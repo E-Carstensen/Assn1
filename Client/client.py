@@ -2,7 +2,6 @@
 Eric Carstensen - 3070801
 CMPT 361 - AS01
 Assignment 1
-this is a test
 
 """
 

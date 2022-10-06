@@ -92,10 +92,10 @@ def connect():
 
 
 def view_files():
-
+    return
 
 def upload():
-
+    return
 
 
 
