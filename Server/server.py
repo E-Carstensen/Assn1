@@ -11,7 +11,7 @@ import os
 import datetime
 
 def main():
-    contacts = {}
+    database = {}
 
     #Creates the server socket and starts listening
     serverSocket = connect()
@@ -40,7 +40,7 @@ def main():
                     if (operation == '1'):
                         view_files()
                     elif (operation == '2'):
-                        upload(connectionSocket, contacts)
+                        upload(connectionSocket, database)
                     elif (operation == '3'):
                         #connectionSocket.close()
                         break
@@ -93,9 +93,48 @@ def connect():
 
 def view_files():
 
+    output = "Name \tSize (Bytes) \tUpload Date and time\n"
 
-def upload():
+    with open('Database.json', r) as f:
+        data = json.load(f)
 
+    for file in data:
+        output = output + f"{file:<13}{size:13}{time}"
+
+    return output
+
+def upload(connectionSocket, database):
+
+    try:
+
+        connectionSocket.send("Please provide the file name:".encode("ascii"))
+
+        file_name, file_size = connectionSocket.recv(2048).decode("ascii").split("\n")
+
+        connectionSocket.send(f"OK{file_size}".encode("ascii"))
+
+        data = connectionSocket.recv(2048)
+
+        with open(file_name, wb) as f:
+            f.write(data)
+
+        with open("Database.json") as f:
+            database = json.load(f)
+
+        database[file_name] = {"size": file_size, "time": datetime.time()}
+
+        with open("Database.json", w) as f:
+            json.dump(database, f)
+
+
+
+
+
+
+    except socket.error as e:
+        print("Error Binding Socket: ", e)
+        connectionSocket.close()
+        sys.exit(1)
 
 
 
