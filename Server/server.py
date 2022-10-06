@@ -43,6 +43,7 @@ def main():
                         upload(connectionSocket, database)
                     elif (operation == '3'):
                         #connectionSocket.close()
+                        #KEEP SERVER SOCKET OPEN
                         break
                     else:
                         connectionSocket.send("Invalid Input".encode('ascii'))

@@ -2,6 +2,7 @@
 Eric Carstensen - 3070801
 CMPT 361 - AS01
 Assignment 1
+
 """
 
 import socket
@@ -30,6 +31,7 @@ def main():
         while (1):
             #Call menu funtion to get user choice and send to server
             option = menu(message)
+            print(option)
             connectionSocket.send(option.encode('ascii'))
 
             #run corresponding subroutine
@@ -80,7 +82,7 @@ def connect():
 
     #Take server name from user
     temp = input("Enter the server name or IP address: ")
-    if (len(temp) != 0):
+    if (len(temp) != 0 and "localhost" not in temp):
         #If user does not enter an address, use default serverName
         serverName = temp
 
@@ -136,11 +138,16 @@ def add_contact(connectionSocket):
 #Terminate the connection with the server
 def disconnect(connectionSocket):
     #Send the server the disconnect operation
-    connectionSocket.send('3'.encode('ascii'))
+    connectionSocket.send('3'.encode('ascii')) #change to terminate keyword
     #Close the socket
     connectionSocket.close()
     #Print message to user to inform the connection has been closed
     print("Connection Terminated")
+    return
+
+
+def upload(connectionSocket):
+    #USE SEND all function of SOCKET
     return
 
 
