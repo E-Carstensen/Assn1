@@ -34,7 +34,7 @@ def main():
                 connectionSocket.send("n\nPlease select the operation:\n1) View uploaded files' information\n2) Upload a file \n3) Terminate the connection\nChoice:".encode("ascii"))
 
                 while 1:
-
+                
                     operation = connectionSocket.recv(2048).decode("ascii")
 
                     if (operation == '1'):

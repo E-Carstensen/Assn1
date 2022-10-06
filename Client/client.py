@@ -31,6 +31,7 @@ def main():
         while (1):
             #Call menu funtion to get user choice and send to server
             option = menu(message)
+            print(option)
             connectionSocket.send(option.encode('ascii'))
 
             #run corresponding subroutine
