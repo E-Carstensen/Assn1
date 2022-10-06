@@ -43,6 +43,7 @@ def main():
                         upload(connectionSocket, contacts)
                     elif (operation == '3'):
                         #connectionSocket.close()
+                        #KEEP SERVER SOCKET OPEN
                         break
                     else:
                         connectionSocket.send("Invalid Input".encode('ascii'))
@@ -95,6 +96,7 @@ def view_files():
     return
 
 def upload():
+    # MUST LOOP TO MAKE SURE YOU RECIEVE ENTIRE FILE
     return
 
 
