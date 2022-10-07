@@ -115,9 +115,10 @@ def upload(connectionSocket, database):
         connectionSocket.send(f"OK{file_size}".encode("ascii"))
 
         data = connectionSocket.recv(2048)
-
-        with open(file_name, wb) as f:
-            f.write(data)
+        while data:
+            with open(file_name, wb) as f:
+                f.write(data)
+            data = connectionSocket.recv(2048)
 
         with open("Database.json") as f:
             database = json.load(f)
