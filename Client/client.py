@@ -23,7 +23,7 @@ def main():
         #Recieve response from server
         message = connectionSocket.recv(2048).decode("ascii")
 
-        if ("Terminate" in message):
+        if ("Incorrect username" in message):
             print(message)
             connectionSocket.close()
             return
@@ -36,9 +36,9 @@ def main():
 
             #run corresponding subroutine
             if (option == '1'):
-                add_contact(connectionSocket)
+                view_files(connectionSocket)
             elif(option == '2'):
-                search(connectionSocket)
+                upload(connectionSocket)
             elif(option == '3'):
                 disconnect(connectionSocket)
                 break
@@ -57,7 +57,6 @@ def main():
 
 #Displays main menu options, takes input and returns string if input is valid
 def menu(message):
-
     #Print menu options and take user input
     option = input(message)
 
@@ -78,7 +77,7 @@ def menu(message):
 def connect():
     #Default server information
     serverName = '127.0.0.1'
-    serverPort = 13000
+    serverPort = 13006
 
     #Take server name from user
     temp = input("Enter the server name or IP address: ")
@@ -134,6 +133,10 @@ def add_contact(connectionSocket):
     #send number for new contact to server
     connectionSocket.send(num.encode('ascii'))
 
+def view_files(connectionSocket):
+
+    message = connectionSocket.recv(2048).decode('ascii')
+    print(message)
 
 #Terminate the connection with the server
 def disconnect(connectionSocket):

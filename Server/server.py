@@ -11,7 +11,7 @@ import os
 import datetime
 
 def main():
-    database = {}
+    database = load_database()
 
     #Creates the server socket and starts listening
     serverSocket = connect()
@@ -29,16 +29,14 @@ def main():
                 if (user_name != "user1"):
                     connectionSocket.send("“Incorrect username. Connection Terminated.".encode("ascii"))
                     connectionSocket.close()
-                    continue
-
-                connectionSocket.send("n\nPlease select the operation:\n1) View uploaded files' information\n2) Upload a file \n3) Terminate the connection\nChoice:".encode("ascii"))
-
+                else:
+                    connectionSocket.send("n\nPlease select the operation:\n1) View uploaded files' information\n2) Upload a file \n3) Terminate the connection\nChoice:".encode("ascii"))
+                    print("username good")
                 while 1:
-
                     operation = connectionSocket.recv(2048).decode("ascii")
 
                     if (operation == '1'):
-                        view_files()
+                        view_files(database, connectionSocket)
                     elif (operation == '2'):
                         upload(connectionSocket, database)
                     elif (operation == '3'):
@@ -58,6 +56,12 @@ def main():
             connectionSocket.close()
 
 
+    except socket.error as e:
+        print('An error occured:',e)
+        connectionSocket.close()
+        serverSocket.close()
+        sys.exit(1)
+
     except KeyboardInterrupt:
             #connectionSocket.close()
             serverSocket.close()
@@ -68,7 +72,7 @@ def main():
 def connect():
 
     #Server Port
-    serverPort = 13000
+    serverPort = 13006
 
     #Create socket using IPv4 and TCP protocols
     try:
@@ -92,17 +96,24 @@ def connect():
 
 
 
-def view_files():
+def view_files(database, connectionSocket):
 
     output = "Name \tSize (Bytes) \tUpload Date and time\n"
 
-    with open('Database.json', r) as f:
-        data = json.load(f)
 
-    for file in data:
-        output = output + f"{file:<13}{size:13}{time}"
 
-    return output
+    for file in database:
+        output = output + f"{file:<13}{database[file]['size']:<13}{database[file]['time']:<13}"
+
+    try:
+        connectionSocket.send(output.encode("ascii"))
+
+    except socket.error as e:
+        print('An error occured:',e)
+        connectionSocket.close()
+        serverSocket.close()
+        sys.exit(1)
+
 
 def upload(connectionSocket, database):
 
@@ -116,7 +127,7 @@ def upload(connectionSocket, database):
 
         data = connectionSocket.recv(2048)
         while data:
-            with open(file_name, wb) as f:
+            with open(file_name, 'wb') as f:
                 f.write(data)
             data = connectionSocket.recv(2048)
 
@@ -125,7 +136,7 @@ def upload(connectionSocket, database):
 
         database[file_name] = {"size": file_size, "time": datetime.time()}
 
-        with open("Database.json", w) as f:
+        with open("Database.json", 'wb') as f:
             json.dump(database, f)
 
 
@@ -137,6 +148,22 @@ def upload(connectionSocket, database):
         print("Error Binding Socket: ", e)
         connectionSocket.close()
         sys.exit(1)
+
+
+def load_database():
+
+    with open("Database.json") as f:
+        data = json.load(f)
+
+    return data
+
+def update_database(database):
+
+    with open("Database.json", "w") as f:
+        json.dump(database, f)
+
+
+
 
 
 
