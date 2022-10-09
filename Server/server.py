@@ -72,7 +72,7 @@ def main():
 def create_socket():
 
     #Server Port
-    serverPort = 13024
+    serverPort = 13037
 
     #Create socket using IPv4 and TCP protocols
     try:
@@ -103,7 +103,7 @@ def view_files(database, connectionSocket):
     database = load_database()
 
     for file in database:
-        output = output + f"{file:<13}{database[file]['size']:<13}{database[file]['time']:<13}\n"
+        output = output + f"{file:<18}{database[file]['size']:<18}{database[file]['time']:<13}\n"
 
     try:
         connectionSocket.send(output.encode("ascii"))
@@ -126,20 +126,19 @@ def upload(connectionSocket, database):
         file_size = file[1]
 
         connectionSocket.send(f"OK{file_size}".encode("ascii"))
-
+        size = 0
         with open(file_name, 'wb') as f:
             while 1:
-                print("Recieving...")
-                data = connectionSocket.recv(1024)
-                print("recived")
-                if not data or data.decode("ascii") == 'DONE':
-                    print("done")
+                data = connectionSocket.recv(2048)
+                size += len(data)
+                if data == b"DONE":
                     break
                 f.write(data)
-                print("wrote")
+
+                if len(data) < 2048:
+                    break
 
 
-        print("Asdasdasd")
         database = load_database()
 
         database[file_name] = {"size": file_size, "time": str(datetime.time())}

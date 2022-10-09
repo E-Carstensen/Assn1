@@ -82,7 +82,7 @@ def menu(message):
 def connect():
     #Default server information
     serverName = '127.0.0.1'
-    serverPort = 13024
+    serverPort = 13037
 
     #Take server name from user
     temp = input("Enter the server name or IP address: ")
@@ -144,12 +144,12 @@ def upload(connectionSocket):
 
     ack = connectionSocket.recv(2048).decode("ascii")
     print(ack)
-    
+
     with open(file_name, 'rb') as f:
         data = f.read()
 
     connectionSocket.sendall(data)
-    connectionSocket.send("DONE".encode("ascii"))
+    connectionSocket.send(b"DONE")
 
     return
 
