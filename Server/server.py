@@ -64,7 +64,7 @@ def main():
 def create_socket():
 
     #Server Port
-    serverPort = 13044
+    serverPort = 13000
 
     #Create socket using IPv4 and TCP protocols
     try:
@@ -107,7 +107,7 @@ def login(connectionSocket):
 #Sends a formatted string of database JSON to client
 def view_files(database, connectionSocket):
     #Init output string with header
-    output = "Name \t\tSize (Bytes) \t\tUpload Date and time\n"
+    output = "\nName \t\tSize (Bytes) \t\tUpload Date and time\n"
 
     #Read databaser from JSON file
     database = load_database()

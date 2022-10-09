@@ -87,7 +87,7 @@ def menu(main):
 def connect():
     #Default server information
     serverName = '127.0.0.1'
-    serverPort = 13044
+    serverPort = 13000
 
     #Take server name from user
     temp = input("Enter the server name or IP address: ")
@@ -151,7 +151,7 @@ def upload(connectionSocket):
 
     #Server responds with ACK confirming file name and size
     ack = connectionSocket.recv(2048).decode("ascii")
-
+    print(ack)
     #Read data from specified file
     with open(file_name, 'rb') as f:
         data = f.read()
@@ -160,7 +160,7 @@ def upload(connectionSocket):
     connectionSocket.sendall(data)
     #Send flag indication the end of the file
     #connectionSocket.send(b"DONE")
-
+    print("Upload process completed")
     return
 
 '''
