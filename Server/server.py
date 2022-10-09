@@ -16,63 +16,55 @@ def main():
     #Creates the server socket and starts listening
     serverSocket = create_socket()
 
+    #Main loop - Continues acception connections
     while 1:
         try:
             #Accept connection
             connectionSocket, addr = serverSocket.accept()
-            #Send new connection welcome message and prompt for username
-            connectionSocket.send("Welcome to our system.\nEnter your username: ".encode("ascii"))
-            #Recieve username from user
-            user_name = connectionSocket.recv(2048).decode('ascii')
 
-            if (user_name != "user1"):
-                connectionSocket.send("“Incorrect username. Connection Terminated.".encode("ascii"))
-                connectionSocket.close()
-            else:
+            #Take and compare username, if incorrect, close connection and
+            if login(connectionSocket) == False:
+                continue
+
+            #Second Loop - Allows multiple acction per connection
+            while 1:
+                #Send Main menu prompt to user
                 connectionSocket.send("""\n\nPlease select the operation:
 1) View uploaded files' information\n2) Upload a file
 3) Terminate the connection\nChoice:""".encode("ascii"))
 
-
-            while 1:
+                #Recieve user choice for operation
                 operation = connectionSocket.recv(2048).decode("ascii")
 
+                #Run subprotocol depending on user choice
                 if (operation == '1'):
                     view_files(database, connectionSocket)
                 elif (operation == '2'):
                     upload(connectionSocket, database)
                 elif (operation == '3'):
-                    #connectionSocket.close()
-                    #KEEP SERVER SOCKET OPEN
                     break
                 else:
+                    print(operation)
                     connectionSocket.send("Invalid Input".encode('ascii'))
 
 
 
-
+        #Error handling incase of broken connection
         except socket.error as e:
             print('An error occured:',e)
             connectionSocket.close()
             serverSocket.close()
             sys.exit(1)
 
-        finally:
-                #connectionSocket.close()
-                serverSocket.close()
-                sys.exit(1)
-
+        #Close connections after user disconnects
         connectionSocket.close()
-
-
-
 
 
 #Create and bind server socket, returns serverSocket object
 def create_socket():
 
     #Server Port
-    serverPort = 13037
+    serverPort = 13044
 
     #Create socket using IPv4 and TCP protocols
     try:
@@ -94,17 +86,38 @@ def create_socket():
     #return serverSocket object
     return serverSocket
 
+#Sends login prompt to client then recieves and compares usernames
+#Returns True if username is correct, False otherwise
+def login(connectionSocket):
+
+    #Send new connection welcome message and prompt for username
+    connectionSocket.send("Welcome to our system.\nEnter your username: ".encode("ascii"))
+    #Recieve username from user
+    user_name = connectionSocket.recv(2048).decode('ascii')
+
+    #If username is incorrect, send error to client and close connection
+    if (user_name != "user1"):
+        connectionSocket.send("Incorrect username. Connection Terminated.".encode("ascii"))
+        connectionSocket.close()
+        return False
+    else:
+        return True
 
 
+#Sends a formatted string of database JSON to client
 def view_files(database, connectionSocket):
-
+    #Init output string with header
     output = "Name \t\tSize (Bytes) \t\tUpload Date and time\n"
 
+    #Read databaser from JSON file
     database = load_database()
 
+    #For each file stored in the databse
     for file in database:
-        output = output + f"{file:<18}{database[file]['size']:<18}{database[file]['time']:<13}\n"
+        #Append file info to output string with padding
+        output = output + f"{file:<16}{database[file]['size']:<24}{database[file]['time']:<13}\n"
 
+    #Send formatted string to client
     try:
         connectionSocket.send(output.encode("ascii"))
 
@@ -118,47 +131,54 @@ def view_files(database, connectionSocket):
 def upload(connectionSocket, database):
 
     try:
-
+        #Send prompt to client for file name
         connectionSocket.send("Please provide the file name:".encode("ascii"))
 
+        #Recieve file name and file size in formatted string
         file = connectionSocket.recv(2048).decode("ascii").split("\n")
         file_name = file[0]
         file_size = file[1]
 
+        #Send ACK to client confiming file size
         connectionSocket.send(f"OK{file_size}".encode("ascii"))
+
+        #Init counter for amount of data recieved
         size = 0
+
         with open(file_name, 'wb') as f:
             while 1:
+                #Recieve 2048 bytes of data
                 data = connectionSocket.recv(2048)
+                #Increment counter
                 size += len(data)
+                #If end of file flag reieved, break
                 if data == b"DONE":
                     break
+                #Write recieved data to file
                 f.write(data)
 
+                #If size of data is smaller than buffer, end of file reached
                 if len(data) < 2048:
                     break
 
+        if (size == file_size):
+            print("Recieved OK")
 
+        #Get up to date database from JSON file
         database = load_database()
 
-        database[file_name] = {"size": file_size, "time": str(datetime.time())}
+        #Append/Modify entry for file in database
+        database[file_name] = {"size": file_size, "time": str(datetime.datetime.now())}
 
+        #Update the JSON file with up to date database object
         update_database(database)
 
-
-
-
-
-
-
     except socket.error as e:
-        print("Error Binding Socket: ", e)
+        print("Error: ", e)
         connectionSocket.close()
         sys.exit(1)
 
-    except exception as e:
-        print(e)
-
+#Reads database JSON file and returns dict object
 def load_database():
 
     with open("Database.json", 'r') as f:
@@ -166,12 +186,11 @@ def load_database():
 
     return data
 
+#Takes database dict and writes it to JSON file
 def update_database(database):
 
     with open("Database.json", "w") as f:
         json.dump(database, f)
-
-
 
 
 

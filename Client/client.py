@@ -16,27 +16,32 @@ def main():
     #initiate server connection
     connectionSocket = connect()
     try:
+        #Recieve prompt for username from server
         message = connectionSocket.recv(2048).decode("ascii")
-
+        #Take username from user
         user_name = input(message)
 
+        #DEBUG: Allows developer to login quicker for testing
         if (len(user_name) == 0):
             user_name = "user1"
 
+        #Send username
         connectionSocket.send(user_name.encode("ascii"))
 
-        #Recieve response from server
-        message = connectionSocket.recv(2048).decode("ascii")
-
-        if ("Incorrect username" in message):
-            print(message)
-            connectionSocket.close()
-            return
 
         while (1):
+            #Recieve response from server, either menu options or incorrect username
+            main = connectionSocket.recv(2048).decode("ascii")
+
+            #If server rejects connection, close socket
+            if ("Incorrect username" in main):
+                print(main)
+                connectionSocket.close()
+                return
+
+
             #Call menu funtion to get user choice and send to server
-            option = menu(message)
-            print(option)
+            option = menu(main)
             connectionSocket.send(option.encode('ascii'))
 
             #run corresponding subroutine
@@ -61,9 +66,9 @@ def main():
 
 
 #Displays main menu options, takes input and returns string if input is valid
-def menu(message):
+def menu(main):
     #Print menu options and take user input
-    option = input(message)
+    option = input(main)
 
     #If input is one of options and only 1 character
     if(option in "123" and len(option) == 1):
@@ -72,7 +77,7 @@ def menu(message):
         #The input is not one of the options or is more than 1 character
         print("Input Not Recognized")
         #Recursively call menu function
-        return menu(message)
+        return menu(main)
 
 
 
@@ -82,7 +87,7 @@ def menu(message):
 def connect():
     #Default server information
     serverName = '127.0.0.1'
-    serverPort = 13037
+    serverPort = 13044
 
     #Take server name from user
     temp = input("Enter the server name or IP address: ")
@@ -127,29 +132,34 @@ def disconnect(connectionSocket):
 
 
 def upload(connectionSocket):
-    #USE SEND all function of SOCKET
+    #Recieve "enter file name" prompt
     message = connectionSocket.recv(2048).decode("ascii")
 
+    #While file name not found, take input from user
     file_name = input(message)
+    while 1:
+        try:
+            file_size = os.stat(file_name).st_size
+            break
+        except:
+            print("File Not Found")
+            file_name = input(message)
 
-    try:
-        file_size = os.stat(file_name).st_size
-    except:
-        print("File Not Found")
-        upload(connectionSocket)
-        return
-
+    #Combine file name and size to string and send to server
     message = file_name + "\n" + str(file_size)
     connectionSocket.send(message.encode("ascii"))
 
+    #Server responds with ACK confirming file name and size
     ack = connectionSocket.recv(2048).decode("ascii")
-    print(ack)
 
+    #Read data from specified file
     with open(file_name, 'rb') as f:
         data = f.read()
 
+    #Send all the data to the server
     connectionSocket.sendall(data)
-    connectionSocket.send(b"DONE")
+    #Send flag indication the end of the file
+    #connectionSocket.send(b"DONE")
 
     return
 
