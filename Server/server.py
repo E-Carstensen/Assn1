@@ -14,65 +14,65 @@ def main():
     database = load_database()
 
     #Creates the server socket and starts listening
-    serverSocket = connect()
+    serverSocket = create_socket()
 
-    try:
-        while 1:
-            try:
-                #Accept connection
-                connectionSocket, addr = serverSocket.accept()
-                #Send new connection welcome message and prompt for username
-                connectionSocket.send("Welcome to our system.\nEnter your username: ".encode("ascii"))
-                #Recieve username from user
-                user_name = connectionSocket.recv(2048).decode('ascii')
+    while 1:
+        try:
+            #Accept connection
+            connectionSocket, addr = serverSocket.accept()
+            #Send new connection welcome message and prompt for username
+            connectionSocket.send("Welcome to our system.\nEnter your username: ".encode("ascii"))
+            #Recieve username from user
+            user_name = connectionSocket.recv(2048).decode('ascii')
 
-                if (user_name != "user1"):
-                    connectionSocket.send("“Incorrect username. Connection Terminated.".encode("ascii"))
-                    connectionSocket.close()
-                else:
-                    connectionSocket.send("n\nPlease select the operation:\n1) View uploaded files' information\n2) Upload a file \n3) Terminate the connection\nChoice:".encode("ascii"))
-                    print("username good")
-                while 1:
-                    operation = connectionSocket.recv(2048).decode("ascii")
-
-                    if (operation == '1'):
-                        view_files(database, connectionSocket)
-                    elif (operation == '2'):
-                        upload(connectionSocket, database)
-                    elif (operation == '3'):
-                        #connectionSocket.close()
-                        #KEEP SERVER SOCKET OPEN
-                        break
-                    else:
-                        connectionSocket.send("Invalid Input".encode('ascii'))
-
-
-            except socket.error as e:
-                print('An error occured:',e)
+            if (user_name != "user1"):
+                connectionSocket.send("“Incorrect username. Connection Terminated.".encode("ascii"))
                 connectionSocket.close()
-                serverSocket.close()
-                sys.exit(1)
+            else:
+                connectionSocket.send("""\n\nPlease select the operation:
+1) View uploaded files' information\n2) Upload a file
+3) Terminate the connection\nChoice:""".encode("ascii"))
 
+
+            while 1:
+                operation = connectionSocket.recv(2048).decode("ascii")
+
+                if (operation == '1'):
+                    view_files(database, connectionSocket)
+                elif (operation == '2'):
+                    upload(connectionSocket, database)
+                elif (operation == '3'):
+                    #connectionSocket.close()
+                    #KEEP SERVER SOCKET OPEN
+                    break
+                else:
+                    connectionSocket.send("Invalid Input".encode('ascii'))
+
+
+
+
+        except socket.error as e:
+            print('An error occured:',e)
             connectionSocket.close()
-
-
-    except socket.error as e:
-        print('An error occured:',e)
-        connectionSocket.close()
-        serverSocket.close()
-        sys.exit(1)
-
-    except KeyboardInterrupt:
-            #connectionSocket.close()
             serverSocket.close()
             sys.exit(1)
 
+        finally:
+                #connectionSocket.close()
+                serverSocket.close()
+                sys.exit(1)
+
+        connectionSocket.close()
+
+
+
+
 
 #Create and bind server socket, returns serverSocket object
-def connect():
+def create_socket():
 
     #Server Port
-    serverPort = 13006
+    serverPort = 13024
 
     #Create socket using IPv4 and TCP protocols
     try:
@@ -98,12 +98,12 @@ def connect():
 
 def view_files(database, connectionSocket):
 
-    output = "Name \tSize (Bytes) \tUpload Date and time\n"
+    output = "Name \t\tSize (Bytes) \t\tUpload Date and time\n"
 
-
+    database = load_database()
 
     for file in database:
-        output = output + f"{file:<13}{database[file]['size']:<13}{database[file]['time']:<13}"
+        output = output + f"{file:<13}{database[file]['size']:<13}{database[file]['time']:<13}\n"
 
     try:
         connectionSocket.send(output.encode("ascii"))
@@ -121,23 +121,31 @@ def upload(connectionSocket, database):
 
         connectionSocket.send("Please provide the file name:".encode("ascii"))
 
-        file_name, file_size = connectionSocket.recv(2048).decode("ascii").split("\n")
+        file = connectionSocket.recv(2048).decode("ascii").split("\n")
+        file_name = file[0]
+        file_size = file[1]
 
         connectionSocket.send(f"OK{file_size}".encode("ascii"))
 
-        data = connectionSocket.recv(2048)
-        while data:
-            with open(file_name, 'wb') as f:
+        with open(file_name, 'wb') as f:
+            while 1:
+                print("Recieving...")
+                data = connectionSocket.recv(1024)
+                print("recived")
+                if not data or data.decode("ascii") == 'DONE':
+                    print("done")
+                    break
                 f.write(data)
-            data = connectionSocket.recv(2048)
+                print("wrote")
 
-        with open("Database.json") as f:
-            database = json.load(f)
 
-        database[file_name] = {"size": file_size, "time": datetime.time()}
+        print("Asdasdasd")
+        database = load_database()
 
-        with open("Database.json", 'wb') as f:
-            json.dump(database, f)
+        database[file_name] = {"size": file_size, "time": str(datetime.time())}
+
+        update_database(database)
+
 
 
 
@@ -149,10 +157,12 @@ def upload(connectionSocket, database):
         connectionSocket.close()
         sys.exit(1)
 
+    except exception as e:
+        print(e)
 
 def load_database():
 
-    with open("Database.json") as f:
+    with open("Database.json", 'r') as f:
         data = json.load(f)
 
     return data

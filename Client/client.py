@@ -7,6 +7,8 @@ Assignment 1
 
 import socket
 import sys
+import os
+import datetime
 
 #Main client loop, calls menu to take user choice in operation then calls
 #matching subroutine
@@ -17,6 +19,9 @@ def main():
         message = connectionSocket.recv(2048).decode("ascii")
 
         user_name = input(message)
+
+        if (len(user_name) == 0):
+            user_name = "user1"
 
         connectionSocket.send(user_name.encode("ascii"))
 
@@ -67,7 +72,7 @@ def menu(message):
         #The input is not one of the options or is more than 1 character
         print("Input Not Recognized")
         #Recursively call menu function
-        return menu()
+        return menu(message)
 
 
 
@@ -77,7 +82,7 @@ def menu(message):
 def connect():
     #Default server information
     serverName = '127.0.0.1'
-    serverPort = 13006
+    serverPort = 13024
 
     #Take server name from user
     temp = input("Enter the server name or IP address: ")
@@ -95,7 +100,6 @@ def connect():
     #Attempt to connect connectionSocket to given server name and port 13000
     try:
         connectionSocket.connect((serverName, serverPort))
-        print("Welcome to the online phone book. \n")
     except socket.error as e:
         print("Error:", e)
         connectionSocket.close()
@@ -105,33 +109,6 @@ def connect():
     return connectionSocket
 
 
-#Search subroutine, sends search term then recieves and prints formatted result
-def search(connectionSocket):
-    #recieve prompt from server
-    message = connectionSocket.recv(2048).decode('ascii')
-    #take search term as input from user
-    val = input(message)
-    #send server search term
-    connectionSocket.send(val.encode('ascii'))
-    #recieve formatted string of all contacts with matching info
-    result = connectionSocket.recv(2048).decode('ascii')
-    #print result to user
-    print(result)
-
-#Add contact subroutine, takes prompts from server and sends new contact info
-def add_contact(connectionSocket):
-    #recieve "Enter Name" prompt
-    message = connectionSocket.recv(2048).decode('ascii')
-    #take new contact name info from user
-    name = input(message)
-    #send name of new contact to server
-    connectionSocket.send(name.encode('ascii'))
-    #recieve "Enter Number" prompt
-    message = connectionSocket.recv(2048).decode('ascii')
-    #take new number info from user
-    num = input(message)
-    #send number for new contact to server
-    connectionSocket.send(num.encode('ascii'))
 
 def view_files(connectionSocket):
 
@@ -151,7 +128,47 @@ def disconnect(connectionSocket):
 
 def upload(connectionSocket):
     #USE SEND all function of SOCKET
+    message = connectionSocket.recv(2048).decode("ascii")
+
+    file_name = input(message)
+
+    try:
+        file_size = os.stat(file_name).st_size
+    except:
+        print("File Not Found")
+        upload(connectionSocket)
+        return
+
+    message = file_name + "\n" + str(file_size)
+    connectionSocket.send(message.encode("ascii"))
+
+    ack = connectionSocket.recv(2048).decode("ascii")
+    print(ack)
+    
+    with open(file_name, 'rb') as f:
+        data = f.read()
+
+    connectionSocket.sendall(data)
+    connectionSocket.send("DONE".encode("ascii"))
+
     return
+
+'''
+    with open(file_name, 'rb') as f:
+
+        while True:
+
+            data = f.read(1024)
+
+            if not data:
+                break
+            print("Sending...")
+            connectionSocket.sendall(data)
+
+'''
+
+
+
 
 
 if __name__ == '__main__':
