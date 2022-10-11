@@ -51,7 +51,7 @@ def main():
                 upload(connectionSocket)
             elif(option == '3'):
                 disconnect(connectionSocket)
-                break
+                return
 
     #Catch errors in connectionSocket creation and handling
     except socket.error as e:
@@ -123,7 +123,7 @@ def view_files(connectionSocket):
 #Terminate the connection with the server
 def disconnect(connectionSocket):
     #Send the server the disconnect operation
-    connectionSocket.send('3'.encode('ascii')) #change to terminate keyword
+    connectionSocket.send("what".encode('ascii')) #change to terminate keyword
     #Close the socket
     #connectionSocket.close()
     #Print message to user to inform the connection has been closed
