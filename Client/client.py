@@ -125,7 +125,7 @@ def disconnect(connectionSocket):
     #Send the server the disconnect operation
     connectionSocket.send('3'.encode('ascii')) #change to terminate keyword
     #Close the socket
-    connectionSocket.close()
+    #connectionSocket.close()
     #Print message to user to inform the connection has been closed
     print("Connection Terminated")
     return
