@@ -11,6 +11,7 @@ import os
 import datetime
 
 def main():
+    #Read database from JSON file
     database = load_database()
 
     #Creates the server socket and starts listening
@@ -22,7 +23,7 @@ def main():
             #Accept connection
             connectionSocket, addr = serverSocket.accept()
 
-            #Take and compare username, if incorrect, close connection and
+            #Take and compare username, if incorrect close connection and await next
             if login(connectionSocket) == False:
                 continue
 
@@ -42,9 +43,10 @@ def main():
                 elif (operation == '2'):
                     upload(connectionSocket, database)
                 elif (operation == '3'):
+                    #Terminate connection with user
                     break
                 else:
-                    print(operation)
+                    #If input is not valid
                     connectionSocket.send("Invalid Input".encode('ascii'))
 
 
@@ -109,7 +111,7 @@ def view_files(database, connectionSocket):
     #Init output string with header
     output = "\nName \t\tSize (Bytes) \t\tUpload Date and time\n"
 
-    #Read databaser from JSON file
+    #Read database from JSON file
     database = load_database()
 
     #For each file stored in the databse
@@ -128,6 +130,10 @@ def view_files(database, connectionSocket):
         sys.exit(1)
 
 
+#Subprotocol for recieving files from client
+#Sends prompt to client for file name, recieves file name and size as 1 string
+#Send ACK to client then begins recieving file data
+#Breaks when end of file is found, and updates JSON database
 def upload(connectionSocket, database):
 
     try:
@@ -158,11 +164,9 @@ def upload(connectionSocket, database):
                 f.write(data)
 
                 #If size of data is smaller than buffer, end of file reached
-                if len(data) < 2048:
+                if len(data) < 2048 or size == file_size:
                     break
 
-        if (size == file_size):
-            print("Recieved OK")
 
         #Get up to date database from JSON file
         database = load_database()

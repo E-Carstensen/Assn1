@@ -22,8 +22,8 @@ def main():
         user_name = input(message)
 
         #DEBUG: Allows developer to login quicker for testing
-        if (len(user_name) == 0):
-            user_name = "user1"
+        #if (len(user_name) == 0):
+        #    user_name = "user1"
 
         #Send username
         connectionSocket.send(user_name.encode("ascii"))
