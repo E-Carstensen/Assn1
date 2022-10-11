@@ -153,18 +153,17 @@ def upload(connectionSocket, database):
 
         with open(file_name, 'wb') as f:
             while 1:
-                #Recieve 2048 bytes of data
+                #Recieve file data
                 data = connectionSocket.recv(2048)
+                
                 #Increment counter
                 size += len(data)
-                #If end of file flag reieved, break
-                if data == b"DONE":
-                    break
+
                 #Write recieved data to file
                 f.write(data)
 
-                #If size of data is smaller than buffer, end of file reached
-                if len(data) < 2048 or size == file_size:
+                #Once the amount of data recieved is equal to expected amount
+                if size == int(file_size):
                     break
 
 
